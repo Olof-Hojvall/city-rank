@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useStore } from '@/state/store';
 import { GRADES, GRADE_COLORS, type Grade } from '@/lib/grades';
 import { X } from 'lucide-react';
@@ -12,12 +13,6 @@ type Props = {
   cities: City[];
   onFlyTo: (cityId: number) => void;
 };
-
-function formatPop(pop: number): string {
-  if (pop >= 1_000_000) return `${(pop / 1_000_000).toFixed(1)}M`;
-  if (pop >= 1_000) return `${(pop / 1_000).toFixed(0)}K`;
-  return String(pop);
-}
 
 export function RankingsList({ cities, onFlyTo }: Props) {
   const { rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
@@ -48,21 +43,17 @@ export function RankingsList({ cities, onFlyTo }: Props) {
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Rankings ({total})
         </span>
-        <div className="flex gap-1">
-          {(['grade', 'pop', 'name'] as SortKey[]).map((key) => (
-            <button
-              key={key}
-              onClick={() => setSort(key)}
-              className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                sort === key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {key === 'grade' ? 'Grade' : key === 'pop' ? 'Pop' : 'A–Z'}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={0}
+          value={sort}
+          onValueChange={(v) => v && setSort(v as SortKey)}
+        >
+          <ToggleGroupItem value="grade" className="h-6 px-2 text-xs">Grade</ToggleGroupItem>
+          <ToggleGroupItem value="pop" className="h-6 px-2 text-xs">Pop</ToggleGroupItem>
+          <ToggleGroupItem value="name" className="h-6 px-2 text-xs">A–Z</ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <ScrollArea className="flex-1">
@@ -148,9 +139,6 @@ function CityRow({
       <span className="flex-1 min-w-0 text-sm truncate">
         {city.name}
         <span className="text-xs text-muted-foreground ml-1">{city.country}</span>
-      </span>
-      <span className="text-xs text-muted-foreground shrink-0">
-        {formatPop(city.pop)}
       </span>
       <Button
         variant="ghost"

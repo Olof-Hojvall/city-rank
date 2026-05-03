@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useStore } from '@/state/store';
 import { RankPicker } from './RankPicker';
 import type { City } from '@/data/cities';
@@ -10,12 +11,6 @@ type SortKey = 'pop' | 'name';
 type Props = {
   onFlyTo: (cityId: number) => void;
 };
-
-function formatPop(pop: number): string {
-  if (pop >= 1_000_000) return `${(pop / 1_000_000).toFixed(1)}M`;
-  if (pop >= 1_000) return `${(pop / 1_000).toFixed(0)}K`;
-  return String(pop);
-}
 
 export function SuggestedList({ onFlyTo }: Props) {
   const { viewportCities, rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
@@ -31,21 +26,16 @@ export function SuggestedList({ onFlyTo }: Props) {
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Suggested ({viewportCities.length})
         </span>
-        <div className="flex gap-1">
-          {(['pop', 'name'] as SortKey[]).map((key) => (
-            <button
-              key={key}
-              onClick={() => setSort(key)}
-              className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                sort === key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {key === 'pop' ? 'Pop' : 'A–Z'}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={0}
+          value={sort}
+          onValueChange={(v) => v && setSort(v as SortKey)}
+        >
+          <ToggleGroupItem value="pop" className="h-6 px-2 text-xs">Pop</ToggleGroupItem>
+          <ToggleGroupItem value="name" className="h-6 px-2 text-xs">A–Z</ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <ScrollArea className="flex-1">
@@ -65,9 +55,6 @@ export function SuggestedList({ onFlyTo }: Props) {
                 <span className="text-sm font-medium">{city.name}</span>
                 <span className="text-xs text-muted-foreground ml-1">{city.country}</span>
               </div>
-              <span className="text-xs text-muted-foreground w-10 text-right shrink-0">
-                {formatPop(city.pop)}
-              </span>
               <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <RankPicker
                   value={rankings[city.id] ?? null}

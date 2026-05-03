@@ -10,15 +10,17 @@ export function RankPicker({ value, onChange }: Props) {
   return (
     <ToggleGroup
       type="single"
+      variant="outline"
+      spacing={0}
       value={value ?? undefined}
       onValueChange={(v) => onChange(v ? (v as Grade) : null)}
-      className="gap-0.5"
+      className="shrink-0"
     >
       {GRADES.map((g) => (
         <ToggleGroupItem
           key={g}
           value={g}
-          className="h-7 w-7 text-xs font-bold data-[state=on]:text-white"
+          className="h-6 w-6 !min-w-0 text-xs font-bold !px-0 data-[state=on]:text-white data-[state=on]:border-transparent"
           style={value === g ? { backgroundColor: GRADE_COLORS[g] } : undefined}
         >
           {g}
