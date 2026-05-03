@@ -1,16 +1,14 @@
-import { execSync } from 'child_process';
-import { createInterface } from 'readline';
-import { createReadStream, mkdirSync, existsSync, unlinkSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, '../public/cities.json');
-const ZIP = '/tmp/cities5000.zip';
-const TXT = '/tmp/cities5000.txt';
 
-const GEONAMES_URL = 'https://download.geonames.org/export/dump/cities5000.zip';
+// Natural Earth populated places — uses POP_MAX (urban agglomeration) instead of
+// administrative city limits, so Paris (~10M) ranks above Berlin (~3.4M) correctly.
+const NE_URL =
+  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places.geojson';
 
 type City = {
   id: number;
@@ -23,37 +21,35 @@ type City = {
 };
 
 async function main() {
-  console.log('Downloading cities5000.zip...');
-  execSync(`curl -L -o ${ZIP} ${GEONAMES_URL}`, { stdio: 'inherit' });
-
-  console.log('Extracting...');
-  execSync(`unzip -p ${ZIP} cities5000.txt > ${TXT}`);
+  console.log('Downloading Natural Earth populated places...');
+  const res = await fetch(NE_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${NE_URL}`);
+  const geojson = await res.json() as { features: Array<{ properties: Record<string, unknown>; geometry: { coordinates: [number, number] } }> };
 
   console.log('Parsing...');
   const cities: City[] = [];
-  const rl = createInterface({ input: createReadStream(TXT, 'utf8'), crlfDelay: Infinity });
+  let id = 1;
 
-  for await (const line of rl) {
-    if (!line.trim()) continue;
-    const cols = line.split('\t');
-    const pop = parseInt(cols[14], 10);
-    if (!pop) continue;
+  for (const feature of geojson.features) {
+    const p = feature.properties;
+    const pop = typeof p.POP_MAX === 'number' ? p.POP_MAX : 0;
+    if (pop <= 0) continue;
+
+    const iso2 = typeof p.ISO_A2 === 'string' && p.ISO_A2 !== '-99' ? p.ISO_A2 : String(p.ADM0_A3 ?? '');
+
     cities.push({
-      id: parseInt(cols[0], 10),
-      name: cols[1],
-      country: cols[8],
-      admin1: cols[10],
-      lat: parseFloat(cols[4]),
-      lng: parseFloat(cols[5]),
+      id: id++,
+      name: String(p.NAMEASCII ?? p.NAME ?? ''),
+      country: iso2,
+      admin1: typeof p.ADM1NAME === 'string' ? p.ADM1NAME : '',
+      lat: typeof p.LATITUDE === 'number' ? p.LATITUDE : (feature.geometry.coordinates[1]),
+      lng: typeof p.LONGITUDE === 'number' ? p.LONGITUDE : (feature.geometry.coordinates[0]),
       pop,
     });
   }
 
-  mkdirSync(path.dirname(OUT), { recursive: true });
   await writeFile(OUT, JSON.stringify(cities), 'utf8');
   console.log(`Wrote ${cities.length} cities to ${OUT}`);
-
-  try { unlinkSync(ZIP); unlinkSync(TXT); } catch {}
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
