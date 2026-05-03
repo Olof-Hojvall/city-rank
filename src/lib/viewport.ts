@@ -7,22 +7,31 @@ export type Bounds = {
   west: number;
 };
 
-export function topNCitiesInBounds(
+function inBounds(city: City, bounds: Bounds): boolean {
+  return (
+    city.lat >= bounds.south &&
+    city.lat <= bounds.north &&
+    city.lng >= bounds.west &&
+    city.lng <= bounds.east
+  );
+}
+
+export function citiesInBoundsWithRated(
   sortedCities: City[],
   bounds: Bounds,
-  n: number,
-): City[] {
-  const result: City[] = [];
+  ratedIds: Set<number>,
+  maxUnrated: number,
+): { cities: City[]; isLimited: boolean } {
+  const rated: City[] = [];
+  const unrated: City[] = [];
   for (const city of sortedCities) {
-    if (result.length >= n) break;
-    if (
-      city.lat >= bounds.south &&
-      city.lat <= bounds.north &&
-      city.lng >= bounds.west &&
-      city.lng <= bounds.east
-    ) {
-      result.push(city);
+    if (!inBounds(city, bounds)) continue;
+    if (ratedIds.has(city.id)) {
+      rated.push(city);
+    } else {
+      unrated.push(city);
     }
   }
-  return result;
+  const isLimited = unrated.length > maxUnrated;
+  return { cities: [...rated, ...unrated.slice(0, maxUnrated)], isLimited };
 }

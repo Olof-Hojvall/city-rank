@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useStore } from '@/state/store';
 import { GRADE_COLORS, GRADES, type Grade } from '@/lib/grades';
-import { topNCitiesInBounds } from '@/lib/viewport';
+import { citiesInBoundsWithRated } from '@/lib/viewport';
 import type { City } from '@/data/cities';
 
 export type MapHandle = {
@@ -89,7 +89,7 @@ export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities, hideU
       });
       map.addSource('cities-ranked-src', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
+        data: rankedToGeoJSON(cities, rankingsRef.current),
       });
 
       map.addLayer({
@@ -133,11 +133,12 @@ export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities, hideU
           pendingUpdate = null;
           const b = map.getBounds();
           const bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
-          const topCities = topNCitiesInBounds(cities, bounds, TOP_N);
+          const ratedIds = new Set(Object.keys(rankingsRef.current).map(Number));
+          const { cities: topCities, isLimited } = citiesInBoundsWithRated(cities, bounds, ratedIds, TOP_N);
           (map.getSource('cities-top-src') as maplibregl.GeoJSONSource).setData(
             citiesToGeoJSON(topCities),
           );
-          startTransition(() => setViewportCities(topCities));
+          startTransition(() => setViewportCities(topCities, isLimited));
         }, 150);
       };
 

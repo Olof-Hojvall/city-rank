@@ -8,10 +8,11 @@ type Store = {
   rankings: Rankings;
   selectedCityId: number | null;
   viewportCities: City[];
+  viewportIsLimited: boolean;
 
   setRanking: (cityId: number, grade: Grade | null) => void;
   setSelectedCity: (cityId: number | null) => void;
-  setViewportCities: (cities: City[]) => void;
+  setViewportCities: (cities: City[], isLimited: boolean) => void;
   resetRankings: () => void;
   importRankings: (rankings: Rankings) => void;
   hydrateFromHash: () => void;
@@ -28,6 +29,7 @@ export const useStore = create<Store>((set, get) => ({
   rankings: readHashRankings(),
   selectedCityId: null,
   viewportCities: [],
+  viewportIsLimited: false,
 
   setRanking: (cityId, grade) => {
     const rankings = { ...get().rankings };
@@ -45,7 +47,7 @@ export const useStore = create<Store>((set, get) => ({
 
   setSelectedCity: (cityId) => set({ selectedCityId: cityId }),
 
-  setViewportCities: (cities) => set({ viewportCities: cities }),
+  setViewportCities: (cities, isLimited) => set({ viewportCities: cities, viewportIsLimited: isLimited }),
 
   resetRankings: () => {
     set({ rankings: {} });

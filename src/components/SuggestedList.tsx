@@ -16,7 +16,7 @@ type Props = {
 };
 
 export function SuggestedList({ filter, onFilterChange, onFlyTo }: Props) {
-  const { viewportCities, rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
+  const { viewportCities, viewportIsLimited, rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
   const [sort, setSort] = useState<SortKey>('pop');
 
   const ratedCount = useMemo(
@@ -47,13 +47,13 @@ export function SuggestedList({ filter, onFilterChange, onFlyTo }: Props) {
           onValueChange={(v) => v && onFilterChange(v as FilterKey)}
         >
           <ToggleGroupItem value="all" className="h-6 px-2 text-xs">
-            All <span className="ml-1 opacity-60">{viewportCities.length}</span>
+            All{!viewportIsLimited && <span className="ml-1 opacity-60">{viewportCities.length}</span>}
           </ToggleGroupItem>
           <ToggleGroupItem value="rated" className="h-6 px-2 text-xs">
             Rated <span className="ml-1 opacity-60">{ratedCount}</span>
           </ToggleGroupItem>
           <ToggleGroupItem value="unrated" className="h-6 px-2 text-xs">
-            Unrated <span className="ml-1 opacity-60">{unratedCount}</span>
+            Unrated{!viewportIsLimited && <span className="ml-1 opacity-60">{unratedCount}</span>}
           </ToggleGroupItem>
         </ToggleGroup>
         <ToggleGroup
