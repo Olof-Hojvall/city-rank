@@ -13,6 +13,7 @@ import {
 import { CityMap, type MapHandle } from '@/components/Map';
 import { SuggestedList } from '@/components/SuggestedList';
 import { ExportDialog } from '@/components/ExportDialog';
+import { ImportDialog } from '@/components/ImportDialog';
 import { useStore } from '@/state/store';
 import { loadCities } from '@/data/cities';
 import type { City } from '@/data/cities';
@@ -80,6 +81,7 @@ export default function App() {
 
           <div className="flex items-center gap-2 px-3 py-2 border-t shrink-0">
             <ExportDialog cities={cities} />
+            <ImportDialog cities={cities} />
             <Button variant="outline" size="sm" onClick={copyUrl}>
               Copy URL
             </Button>

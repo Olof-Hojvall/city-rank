@@ -13,6 +13,7 @@ type Store = {
   setSelectedCity: (cityId: number | null) => void;
   setViewportCities: (cities: City[]) => void;
   resetRankings: () => void;
+  importRankings: (rankings: Rankings) => void;
   hydrateFromHash: () => void;
 };
 
@@ -51,6 +52,14 @@ export const useStore = create<Store>((set, get) => ({
     writeHashRankings({});
     try {
       localStorage.removeItem('city-rank:last');
+    } catch {}
+  },
+
+  importRankings: (rankings) => {
+    set({ rankings });
+    scheduleUrlUpdate(rankings);
+    try {
+      localStorage.setItem('city-rank:last', JSON.stringify(rankings));
     } catch {}
   },
 

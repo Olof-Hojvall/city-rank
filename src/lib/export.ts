@@ -2,6 +2,64 @@ import { GRADES, type Grade } from './grades';
 import type { Rankings } from './urlState';
 import type { City } from '../data/cities';
 
+const GRADE_SET = new Set<string>(GRADES);
+function isGrade(s: string): s is Grade {
+  return GRADE_SET.has(s);
+}
+
+function cityIndex(cities: City[]): Map<string, number> {
+  return new Map(cities.map((c) => [c.name.toLowerCase(), c.id]));
+}
+
+export function parseCSV(text: string, cities: City[]): Rankings {
+  const index = cityIndex(cities);
+  const rankings: Rankings = {};
+  const lines = text.trim().split('\n');
+  for (const line of lines) {
+    if (line.startsWith('grade,')) continue;
+    const parts = line.split(',');
+    if (parts.length < 2) continue;
+    const grade = parts[0].trim();
+    const name = parts[1].replace(/^"|"$/g, '').trim();
+    if (!isGrade(grade)) continue;
+    const id = index.get(name.toLowerCase());
+    if (id !== undefined) rankings[id] = grade;
+  }
+  return rankings;
+}
+
+export function parseMarkdown(text: string, cities: City[]): Rankings {
+  const index = cityIndex(cities);
+  const rankings: Rankings = {};
+  let currentGrade: Grade | null = null;
+  for (const line of text.split('\n')) {
+    const header = line.match(/^##\s+([A-F])$/);
+    if (header) { currentGrade = header[1] as Grade; continue; }
+    if (!currentGrade) continue;
+    const item = line.match(/^-\s+(.+?),/);
+    if (!item) continue;
+    const id = index.get(item[1].trim().toLowerCase());
+    if (id !== undefined) rankings[id] = currentGrade;
+  }
+  return rankings;
+}
+
+export function parseText(text: string, cities: City[]): Rankings {
+  const index = cityIndex(cities);
+  const rankings: Rankings = {};
+  let currentGrade: Grade | null = null;
+  for (const line of text.split('\n')) {
+    const header = line.match(/^([A-F])$/);
+    if (header) { currentGrade = header[1] as Grade; continue; }
+    if (!currentGrade) continue;
+    const item = line.match(/^\s{2}(.+?),/);
+    if (!item) continue;
+    const id = index.get(item[1].trim().toLowerCase());
+    if (id !== undefined) rankings[id] = currentGrade;
+  }
+  return rankings;
+}
+
 type RankedCity = City & { grade: Grade };
 
 function groupByGrade(rankings: Rankings, cities: City[]): Record<Grade, RankedCity[]> {
