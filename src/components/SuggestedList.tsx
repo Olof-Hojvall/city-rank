@@ -3,7 +3,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useStore } from '@/state/store';
 import { RankPicker } from './RankPicker';
-import type { City } from '@/data/cities';
 import type { Grade } from '@/lib/grades';
 
 type SortKey = 'pop' | 'name';

@@ -113,7 +113,7 @@ export function RankingsList({ cities, onFlyTo }: Props) {
 }
 
 function CityRow({
-  id, city, grade, selected, onSelect, onRemove, showGrade,
+  city, grade, selected, onSelect, onRemove, showGrade,
 }: {
   id: number;
   city: City;
