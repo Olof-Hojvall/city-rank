@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useStore } from '@/state/store';
@@ -19,18 +19,22 @@ export function SuggestedList({ filter, onFilterChange, onFlyTo }: Props) {
   const { viewportCities, rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
   const [sort, setSort] = useState<SortKey>('pop');
 
-  const filtered = viewportCities.filter((city) => {
-    if (filter === 'rated') return city.id in rankings;
-    if (filter === 'unrated') return !(city.id in rankings);
-    return true;
-  });
-
-  const sorted = [...filtered].sort((a, b) =>
-    sort === 'pop' ? b.pop - a.pop : a.name.localeCompare(b.name),
+  const ratedCount = useMemo(
+    () => viewportCities.filter((c) => c.id in rankings).length,
+    [viewportCities, rankings],
   );
-
-  const ratedCount = viewportCities.filter((c) => c.id in rankings).length;
   const unratedCount = viewportCities.length - ratedCount;
+
+  const sorted = useMemo(() => {
+    const filtered = viewportCities.filter((city) => {
+      if (filter === 'rated') return city.id in rankings;
+      if (filter === 'unrated') return !(city.id in rankings);
+      return true;
+    });
+    return [...filtered].sort((a, b) =>
+      sort === 'pop' ? b.pop - a.pop : a.name.localeCompare(b.name),
+    );
+  }, [viewportCities, rankings, filter, sort]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0">

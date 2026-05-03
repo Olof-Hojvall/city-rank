@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, startTransition } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useStore } from '@/state/store';
@@ -40,9 +40,7 @@ function rankedToGeoJSON(cities: City[], rankings: Record<number, Grade>) {
         properties: { id: c.id, name: c.name, country: c.country, pop: c.pop, grade },
       };
     })
-    .filter(
-      (f): f is NonNullable<typeof f> => f !== null,
-    );
+    .filter((f): f is NonNullable<typeof f> => f !== null);
   return { type: 'FeatureCollection' as const, features };
 }
 
@@ -128,17 +126,19 @@ export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities, hideU
         },
       });
 
+      let pendingUpdate: ReturnType<typeof setTimeout> | null = null;
       const updateViewport = () => {
-        const b = map.getBounds();
-        const bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
-        const topCities = topNCitiesInBounds(cities, bounds, TOP_N);
-        setViewportCities(topCities);
-        (map.getSource('cities-top-src') as maplibregl.GeoJSONSource).setData(
-          citiesToGeoJSON(topCities),
-        );
-        (map.getSource('cities-ranked-src') as maplibregl.GeoJSONSource).setData(
-          rankedToGeoJSON(cities, rankingsRef.current),
-        );
+        if (pendingUpdate !== null) clearTimeout(pendingUpdate);
+        pendingUpdate = setTimeout(() => {
+          pendingUpdate = null;
+          const b = map.getBounds();
+          const bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
+          const topCities = topNCitiesInBounds(cities, bounds, TOP_N);
+          (map.getSource('cities-top-src') as maplibregl.GeoJSONSource).setData(
+            citiesToGeoJSON(topCities),
+          );
+          startTransition(() => setViewportCities(topCities));
+        }, 150);
       };
 
       map.on('moveend', updateViewport);
