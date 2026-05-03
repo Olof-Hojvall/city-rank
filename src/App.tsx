@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<MapHandle>(null);
-  const { hydrateFromHash, resetRankings } = useStore();
+  const { hydrateFromHash, resetRankings, rankings } = useStore();
 
   useEffect(() => {
     hydrateFromHash();
@@ -64,6 +64,8 @@ export default function App() {
     );
   }
 
+  const rankCount = Object.keys(rankings).length;
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <header className="flex items-center gap-3 px-4 py-2 border-b shrink-0">
@@ -77,15 +79,31 @@ export default function App() {
         </div>
 
         <aside className="w-80 shrink-0 flex flex-col border-l min-h-0">
-          <SuggestedList onFlyTo={handleFlyTo} />
+          <Tabs defaultValue="suggested" className="flex flex-col flex-1 min-h-0">
+            <TabsList className="shrink-0 w-full rounded-none border-b h-10 px-2 justify-start gap-1 bg-background">
+              <TabsTrigger value="suggested" className="text-xs">
+                Suggested
+              </TabsTrigger>
+              <TabsTrigger value="rankings" className="text-xs">
+                My Rankings
+                {rankCount > 0 && (
+                  <span className="ml-1.5 rounded-full bg-primary text-primary-foreground text-[10px] w-4 h-4 flex items-center justify-center">
+                    {rankCount > 99 ? '99+' : rankCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          <Separator />
+            <TabsContent value="suggested" className="flex-1 min-h-0 mt-0 flex flex-col overflow-hidden">
+              <SuggestedList onFlyTo={handleFlyTo} />
+            </TabsContent>
 
-          <RankingsList cities={cities} onFlyTo={handleFlyTo} />
+            <TabsContent value="rankings" className="flex-1 min-h-0 mt-0 flex flex-col overflow-hidden">
+              <RankingsList cities={cities} onFlyTo={handleFlyTo} />
+            </TabsContent>
+          </Tabs>
 
-          <Separator />
-
-          <div className="flex items-center gap-2 px-3 py-2 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 px-3 py-2 border-t shrink-0">
             <ExportDialog cities={cities} />
             <Button variant="outline" size="sm" onClick={copyUrl}>
               Copy URL
