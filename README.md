@@ -1,21 +1,34 @@
-# React + TypeScript + Vite + shadcn/ui
+# City Rank
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+Rate cities A–F on an interactive world map. Your rankings live entirely in the URL — no accounts, no backend.
 
-## Adding components
+**[Live app →](https://olofhojvall.github.io/city-rank/)**
 
-To add components to your app, run the following command:
+## Features
+
+- Browse ~55,000 cities (GeoNames `cities5000` dataset)
+- Assign grades A–F to any city
+- Rankings are compressed into the URL hash — copy the URL to save or share
+- Filter the sidebar by rated/unrated cities
+- Export your list as Markdown, CSV, or plain text
+- Import a previously exported list
+
+## Tech stack
+
+- React + TypeScript + Vite
+- MapLibre GL JS for WebGL map rendering
+- Zustand for state management
+- lz-string for URL compression
+- shadcn/ui + Tailwind CSS
+
+## Development
 
 ```bash
-npx shadcn@latest add button
+pnpm install
+pnpm cities   # download and build cities.json from GeoNames
+pnpm dev
 ```
 
-This will place the ui components in the `src/components` directory.
+## Deploy
 
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
-```
+Pushes to `main` automatically deploy to GitHub Pages via the CI workflow.
