@@ -7,25 +7,51 @@ import type { City } from '@/data/cities';
 import type { Grade } from '@/lib/grades';
 
 type SortKey = 'pop' | 'name';
+type FilterKey = 'all' | 'rated' | 'unrated';
 
 type Props = {
+  filter: FilterKey;
+  onFilterChange: (f: FilterKey) => void;
   onFlyTo: (cityId: number) => void;
 };
 
-export function SuggestedList({ onFlyTo }: Props) {
+export function SuggestedList({ filter, onFilterChange, onFlyTo }: Props) {
   const { viewportCities, rankings, setRanking, setSelectedCity, selectedCityId } = useStore();
   const [sort, setSort] = useState<SortKey>('pop');
 
-  const sorted = [...viewportCities].sort((a, b) =>
+  const filtered = viewportCities.filter((city) => {
+    if (filter === 'rated') return city.id in rankings;
+    if (filter === 'unrated') return !(city.id in rankings);
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) =>
     sort === 'pop' ? b.pop - a.pop : a.name.localeCompare(b.name),
   );
 
+  const ratedCount = viewportCities.filter((c) => c.id in rankings).length;
+  const unratedCount = viewportCities.length - ratedCount;
+
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="flex items-center justify-between px-3 pt-2 pb-1 shrink-0">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Suggested ({viewportCities.length})
-        </span>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={0}
+          value={filter}
+          onValueChange={(v) => v && onFilterChange(v as FilterKey)}
+        >
+          <ToggleGroupItem value="all" className="h-6 px-2 text-xs">
+            All <span className="ml-1 opacity-60">{viewportCities.length}</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="rated" className="h-6 px-2 text-xs">
+            Rated <span className="ml-1 opacity-60">{ratedCount}</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="unrated" className="h-6 px-2 text-xs">
+            Unrated <span className="ml-1 opacity-60">{unratedCount}</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
         <ToggleGroup
           type="single"
           variant="outline"
@@ -38,7 +64,7 @@ export function SuggestedList({ onFlyTo }: Props) {
         </ToggleGroup>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-hidden">
         <div className="px-2 pb-2 space-y-0.5">
           {sorted.map((city) => (
             <div

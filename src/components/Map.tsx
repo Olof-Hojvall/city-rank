@@ -12,6 +12,7 @@ export type MapHandle = {
 
 type Props = {
   cities: City[];
+  hideUnrated?: boolean;
 };
 
 const TOP_N = 300;
@@ -45,7 +46,7 @@ function rankedToGeoJSON(cities: City[], rankings: Record<number, Grade>) {
   return { type: 'FeatureCollection' as const, features };
 }
 
-export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities }, ref) {
+export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities, hideUnrated = false }, ref) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { rankings, setSelectedCity, setViewportCities } = useStore();
@@ -170,6 +171,13 @@ export const CityMap = forwardRef<MapHandle, Props>(function Map({ cities }, ref
     const src = map.getSource('cities-ranked-src') as maplibregl.GeoJSONSource | undefined;
     if (src) src.setData(rankedToGeoJSON(cities, rankings));
   }, [rankings, cities]);
+
+  // Toggle unrated dot visibility
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    map.setLayoutProperty('cities-top', 'visibility', hideUnrated ? 'none' : 'visible');
+  }, [hideUnrated]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 });
